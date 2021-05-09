@@ -1,0 +1,5 @@
+[web]
+ListenAddr = ":8011"
+StaticPath = "static"
+[hello]
+ListenAddr = ":8012"
