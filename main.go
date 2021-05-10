@@ -14,6 +14,10 @@ import (
 
 	xContext "golang.org/x/net/context"
 	"golang.org/x/sync/errgroup"
+
+	. "group/core"
+	_ "group/hellosvr"
+	_ "group/websvr"
 )
 
 var (
@@ -49,28 +53,25 @@ func Run(configFile string) (err error) {
 	group, errCtx = errgroup.WithContext(xContext.Background())
 
 	//启动服务
-	for name, config := range Svrs {
+	for name, s := range Svrs {
 		if cfg, ok := cfg[name]; ok {
 			b, _ := json.Marshal(cfg)
-			if err = json.Unmarshal(b, config.Config); err != nil {
+			if err = s.SetConfig(b); err != nil {
 				continue
 			}
-			//填充
-			config.ErrCtx = errCtx
+			s.SetCtx(errCtx)
 		} else {
 			continue
 		}
 
-		if config.Run != nil {
-			group.Go(config.Run)
-		}
+		group.Go(s.Run)
 	}
 
+	//把监控也作为一个runner
 	group.Go(sign_monitor)
 
 	group.Wait()
 	fmt.Println("main exit")
-
 	return
 }
 
